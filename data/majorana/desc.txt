@@ -1,0 +1,16 @@
+the format of parameter.txt is this:
+t {start timestamp} {end timestamp} <--- at the start of each partition
+{detnum} {detname} {fwhm} {fwhm_err} {eff} {eff_err} {exposure} {E_shift} {E_shift_err} {bkgname} {sysname}
+the format of events.txt is this:
+{detname} {timestamp} {energy} {bkgname}
+
+Identifiers for the tool to know which bkg and systematic unc values to
+use. The systematic uncertainty fit parameters are shared between
+detectors with the same sys name. This means that all detectors under one
+sys name share the same pull terms for energy shift, FWHM and efficiency.
+I am aware that this is a bit questionable, but I guess this shouldn't
+have a large contribution to the likelihood at the moment anyways.
+
+You can see the separation as described here in the bgkname in the
+parameter.txt. In addition, what is not mentioned in this text, is, that
+the icpc and ppc in module 2 are also separated.

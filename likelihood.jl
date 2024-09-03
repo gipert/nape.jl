@@ -13,13 +13,13 @@ m_76 = 75.6E-3 # kg/mol
 # k-parameters are vectors indexed by event indices (timestamp ordering)
 ModelParameters = NamedTuple{(:Γ12, :B, :Δk, :σk, :α)}
 
+# TODO: check that all events are found in the partitions table
+
 # experiment = data set with shared background index parameter B
 function make_exp_likelihood(events::Table, partitions::Table)
-
     DensityInterface.logfuncdensity(
         p::ModelParameters -> begin
             logL = 0
-            event_idx = 0
 
             # loop over partitions
             for part in partitions
@@ -30,21 +30,13 @@ function make_exp_likelihood(events::Table, partitions::Table)
                 μbk = p.B * ΔE * part.exposure
                 μk = μbk + μsk
 
-                # retrieve events in partition, need only the energy
-                # FIXME: this can be done in advance to speed up likelihood computation
-                E = events.energy[
-                    (events.timestamp .>= part.span[1]) .&&
-                    (events.timestamp .<= part.span[2]) .&&
-                    (events.detector == part.detector)
-                ]
-
                 # TODO: Julia syntax to explode a Measurement in two arguments?
                 logL += logpdf(Poisson(μk), length(E)) + logpdf(Normal(), p.α)
 
-                # assumption: events in the table are timestamp ordered
-                for e in E
-                    logL += - log(μk) + log(μbk/ΔE + μsk * pdf(Normal(Qββ + p.Δk[event_idx], p.σk[event_idx]), e))
-                    event_idx += 1
+                # FIXME: event_idx ordering: order of partitions table
+                for i in part.event_idxs
+                    logL += - log(μk) +
+                            + log(μbk/ΔE + μsk * pdf(Normal(Qββ + p.Δk[i], p.σk[i]), events[i].energy))
                 end
             end
 
