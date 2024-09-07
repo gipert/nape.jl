@@ -41,6 +41,9 @@ function get_data(experiment::Symbol, from_cache=false)::NamedTuple
     elseif experiment == :legend200
         events = read_events_legend200()
         partitions = read_partitions_legend200()
+    elseif string(experiment)[1:8] == "majorana"
+        events = read_events_majorana(experiment)
+        partitions = read_partitions_majorana()
     else
         @error "experiment $experiment not known"
     end

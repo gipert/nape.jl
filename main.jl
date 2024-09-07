@@ -35,6 +35,7 @@ posterior = PosteriorMeasure(full_likelihood, prior)
     MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)
 ).result
 
-bat_report(samples)
+println(bat_report(samples))
 
+@printf "BI = %.3g (68%% CI)" mode(samples.v.B)
 @printf "Result: T_12 > %.3g (90%% CI)" quantile(1E26 ./ samples.v.Γ12, 0.9)
