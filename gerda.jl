@@ -41,6 +41,9 @@ function read_partitions_gerdaII()::Table
         for (k, v) in block
             k in ["start_ts", "end_ts", "start_utc", "end_utc"] && continue
 
+            # partitions with null exposure? wtf?
+            v["exposure"] <= 0 && continue
+
             push!(span, block["start_ts"]..block["end_ts"])
             push!(detector, k)
             push!(exposure, v["exposure"])

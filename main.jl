@@ -1,29 +1,40 @@
 using BAT
 using Distributions
 using IntervalSets: (..)
-using Plots
+using Printf
+
+# using Debugger
+# break_on(:error)
 
 include("gerda.jl")
 include("legend200.jl")
 include("likelihood.jl")
 include("tools.jl")
 
-events = read_events_gerdaII()
-partitions = read_partitions_gerdaII()
-likelihood = make_exp_likelihood(events, partitions)
+gerda = get_data(:legend200)
 
-events = add_partition_info(events, partitions)
-partitions = add_event_idxs(partitions, events)
+# let block because accessing global stuff is slow?
+full_likelihood = let gerda=gerda
+    logfuncdensity(p -> likelihood(gerda..., p))
+end
 
 prior = distprod(
-    Γ12 = 1E-28..1E-26,
-    B = 0..1,
-    Δk = [Normal(v.val, v.err) for v in events.Δk],
-    σk = [truncated(Normal(v.val, v.err), lower=0) for v in events.σk],
-    α = 0..10,
+    # FIXME: why does lower=0 crash BAT?
+    Γ12 = 0.01..5,
+    B = 1E-5..1E-2, # cts / keV kg yr
+    Δk = [Normal(v.val, v.err) for v in gerda.events.Δk],
+    # FIXME: BAT is bugged, crashes with truncated distributions
+    σk = [Normal(v.val, v.err) for v in gerda.events.σk],
+    α = 0..1,
 )
 
-posterior = PosteriorMeasure(likelihood, prior)
-samples = bat_sample(posterior, MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)).result
+posterior = PosteriorMeasure(full_likelihood, prior)
+
+@time samples = bat_sample(
+    posterior,
+    MCMCSampling(mcalg=MetropolisHastings(), nsteps=10^5, nchains=4)
+).result
 
 bat_report(samples)
+
+@printf "Result: T_12 > %.3g (90%% CI)" quantile(1E26 ./ samples.v.Γ12, 0.9)
