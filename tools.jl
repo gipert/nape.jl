@@ -31,7 +31,7 @@ function _add_event_idxs(partitions::Table, events::Table)::Table
     return Table((columns(partitions)..., event_idxs=indices))
 end
 
-function get_data(experiment::Symbol, from_cache=false)::NamedTuple
+function get_data(experiment::Symbol, from_cache::Bool=false)::NamedTuple
     if from_cache
         #...
         # return (events=events, partitions=partitions)

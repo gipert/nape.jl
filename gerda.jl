@@ -55,3 +55,9 @@ function read_partitions_gerdaII()::Table
 
     return Table(span=span, detector=detector, exposure=exposure, ϵk=ϵk, Δk=Δk, σk=σk)
 end
+
+function read_events_gerdaI()::Table
+end
+
+function read_partitions_gerdaI()::Table
+end

@@ -16,7 +16,10 @@ ModelParameters = NamedTuple{(:Γ12, :B, :Δk, :σk, :α)}
 # experiment = data set with shared background index parameter B
 
 # no for loops, only array programming
-function likelihood(events::Table, partitions::Table, p::ModelParameters)::Float64
+# NOTE: @inbounds, @views and @fastmath make a marginal difference
+# NOTE: broadcasted operations should be already vectorized?
+# TODO: move multiplication of scalars to the end
+function likelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
     P = partitions
     # same notation as in LNote 24-006
     # Γ12 will be in units of 10^-26 yr^-1
@@ -25,6 +28,7 @@ function likelihood(events::Table, partitions::Table, p::ModelParameters)::Float
     μbk = p.B * ΔE * P.exposure
     μk = μbk .+ μsk
 
+    # energy nuisance parameters are indexed according to index in events table
     pid = events.part_idx
 
     return (
@@ -34,7 +38,8 @@ function likelihood(events::Table, partitions::Table, p::ModelParameters)::Float
         # FIXME: remove abs() once problem with truncated distributions is fixed
         sum(
             -log.(μk[pid]) .+
-            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ p.Δk, abs.(p.σk)), events.energy)))
+            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ p.Δk, abs.(p.σk)), events.energy))
+        )
     )
 
 end

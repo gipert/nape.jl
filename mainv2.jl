@@ -8,32 +8,34 @@ using Plots
 
 include("gerda.jl")
 include("legend200.jl")
+include("majorana.jl")
 include("likelihood.jl")
 include("tools.jl")
 
 experiments = (:gerdaII, :legend200)
 
+function getpars(pars::NamedTuple, experiment::Symbol)::NamedTuple
+    sel = filter(x -> startswith(string(x.first), "$(experiment)_"), pairs(pars))
+    return NamedTuple(Symbol(chopprefix(string(k), "$(experiment)_")) => v for (k, v) in pairs(sel))
+end
+
 full_likelihood = logfuncdensity(
-    p -> prod([likelihood(get_data(exp)..., (p.Γ12, p[exp]...)) for exp in experiments])
+    # non-global parameter names are prefixed by the experiment id, need to
+    # strip it off to make the likelihood work
+    p -> prod([likelihood(get_data(exp)..., (Γ12=p.Γ12, getpars(p, exp)...)) for exp in experiments])
 )
 
+# FIXME: BAT is bugged, crashes with truncated distributions
 prior = distprod(
-    # FIXME: why does lower=0 crash BAT?
     Γ12 = 0.01..1,
-    gerdaII = distprod(
-        B = 1E-5..1E-2, # cts / keV kg yr
-        Δk = [Normal(v.val, v.err) for v in get_data(:gerdaII).events.Δk],
-        # FIXME: BAT is bugged, crashes with truncated distributions
-        σk = [Normal(v.val, v.err) for v in get_data(:gerdaII).events.σk],
-        α = 0..1,
-    ),
-    legend200 = distprod(
-        B = 1E-5..1E-2, # cts / keV kg yr
-        Δk = [Normal(v.val, v.err) for v in get_data(:legend200).events.Δk],
-        # FIXME: BAT is bugged, crashes with truncated distributions
-        σk = [Normal(v.val, v.err) for v in get_data(:legend200).events.σk],
-        α = 0..1,
-    ),
+    gerdaII_B = 1E-5..1E-2, # cts / keV kg yr
+    gerdaII_Δk = [Normal(v.val, v.err) for v in get_data(:gerdaII).events.Δk],
+    gerdaII_σk = [Normal(v.val, v.err) for v in get_data(:gerdaII).events.σk],
+    gerdaII_α = 0..1,
+    legend200_B = 1E-5..1E-2, # cts / keV kg yr
+    legend200_Δk = [Normal(v.val, v.err) for v in get_data(:legend200).events.Δk],
+    legend200_σk = [Normal(v.val, v.err) for v in get_data(:legend200).events.σk],
+    legend200_α = 0..1,
 )
 
 posterior = PosteriorMeasure(full_likelihood, prior)

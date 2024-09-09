@@ -1,7 +1,19 @@
 using Plots
 
+# FIXME: this assumes main.jl has run
+
 function plot_marginals()
-    plot(plot(samples, :Γ12, nbins=100), plot(samples, :B, nbins=100), size=(900, 400))
+    # TODO: please julia do not update x-axis range automatically
+    plots = []
+    for par in [:Γ12, :B]
+        p = plot(samples, par, nbins=100)
+        sup = support(prior[par])
+        x = range(sup.lb, sup.ub, length=100)
+        plot!(x, pdf(prior[par], x), color=:gray)
+        push!(plots, p)
+    end
+
+    plot(plots..., size=(900, 400))
 end
 
 function plot_spectra()
@@ -21,11 +33,21 @@ function plot_spectra()
     plot!(
         xlim, fill(mean(B_68), 2),
         ribbon=width(B_68)/2,
-        fillalpha=0.2, label=:none
+        linewidth=0,
+        fillalpha=0.2, label="BI"
     )
 
-    # plot!(
-    #     xlim, fill(mode(samples).B, 2),
-    #     st=:line
-    # )
+    plot!(
+        xlim, fill(mode(samples).B, 2),
+        st=:line, label=:none
+    )
+
+    P = partitions
+    Γ12_90 = quantile(1E26 ./ samples.v.Γ12, 0.1)
+    μs = sum(Γ12_90 * log(2) * N_A .* getfield.(P.ϵk, :val) / m_76 / ΔE)
+
+    plot!(
+        xlim, μs * pdf(Normal(2039, 2.5), xlim) .+ mode(samples).B,
+        fill=:blue
+    )
 end
