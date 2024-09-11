@@ -3,6 +3,18 @@ using TypedTables
 using Distributions
 using DensityInterface
 
+# events: Table with columns (timestamp, detector, energy). timestamp and
+# detector must match the format in the partitions table
+#
+# partitions: Table with columns (
+#     span::Interval,
+#     detector::String,
+#     exposure::Real, in kg yr
+#     ϵk::Measurement,
+#     Δk::Measurement, in keV
+#     σk::Measurement, in keV
+# )
+
 Qββ = 2039.04 # keV
 N_A = 6.02214
 m_76 = 75.9214 # g/mol

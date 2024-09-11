@@ -3,18 +3,6 @@ using JSON
 using Measurements
 using IntervalSets: Interval, (..)
 
-# events: Table with columns (timestamp, detector, energy). timestamp and
-# detector must match the format in the partitions table
-#
-# partitions: Table with columns (
-#     span::Interval,
-#     detector::String,
-#     exposure::Real, in kg yr
-#     ϵk::Measurement,
-#     Δk::Measurement, in keV
-#     σk::Measurement, in keV
-# )
-
 # :gerdaI_golden
 # :gerdaI_silver
 # :gerdaI_bege

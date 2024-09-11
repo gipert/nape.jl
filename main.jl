@@ -14,7 +14,8 @@ include("majorana.jl")
 include("likelihood.jl")
 include("tools.jl")
 
-experiments = (:gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra, :gerdaII)
+# experiments = (:gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra, :gerdaII)
+experiments = (:gerdaI_golden,)
 
 # cache data in memory
 data = Dict(exp => get_data(exp) for exp in experiments)
@@ -24,6 +25,7 @@ data = Dict(exp => get_data(exp) for exp in experiments)
 # this is unfortunately not possible yet with BAT, so I am going to just prefix
 # the parameter names with the experiment name
 
+# build the combined loglikelihood by summing the partial loglikelihoods
 # TODO: getpars() is introducing latency...
 full_loglikelihood = logfuncdensity(
     # non-global parameter names are prefixed by the experiment id, need to
@@ -51,7 +53,7 @@ end
 
 prior = distprod(;
     # the 0vbb half-life is a global parameter
-    Γ12 = 0..2, # 10^-26 yr^-1
+    Γ12 = 0.01..2, # 10^-26 yr^-1
     # all the other parameters are experiment specific
     merge([make_exp_priors(exp) for exp in experiments]...)...
 )

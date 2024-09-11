@@ -12,23 +12,22 @@ include("majorana.jl")
 include("likelihood.jl")
 include("tools.jl")
 
-gerda = get_data(:gerdaII)
+gerda = get_data(:gerdaI_golden)
 
 # let block because accessing global stuff is slow?
-full_likelihood = let gerda=gerda
-    logfuncdensity(p -> likelihood(gerda..., p))
+full_loglikelihood = let gerda=gerda
+    logfuncdensity(p -> loglikelihood(gerda..., p))
 end
 
 prior = distprod(
-    Γ12 = 0..5,
+    Γ12 = 0..2,
     B = 1E-5..1E-2, # cts / keV kg yr
     Δk = [Normal(v.val, v.err) for v in gerda.events.Δk],
-    # FIXME: BAT is bugged, crashes with truncated distributions
-    σk = [Normal(v.val, v.err) for v in gerda.events.σk],
-    α = 0..1,
+    σk = [truncated(Normal(v.val, v.err), lower=0) for v in gerda.events.σk],
+    α = -1..1,
 )
 
-posterior = PosteriorMeasure(full_likelihood, prior)
+posterior = PosteriorMeasure(full_loglikelihood, prior)
 
 @time samples = bat_sample(
     posterior,
