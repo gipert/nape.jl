@@ -32,16 +32,20 @@ function _add_event_idxs(partitions::Table, events::Table)::Table
 end
 
 function get_data(experiment::Symbol, from_cache::Bool=false)::NamedTuple
+    @info "getting data for $experiment..."
     if from_cache
         #...
         # return (events=events, partitions=partitions)
+    elseif startswith(string(experiment), "gerdaI_")
+        events = read_events_gerdaI(experiment)
+        partitions = read_partitions_gerdaI()
     elseif experiment == :gerdaII
         events = read_events_gerdaII()
         partitions = read_partitions_gerdaII()
     elseif experiment == :legend200
         events = read_events_legend200()
         partitions = read_partitions_legend200()
-    elseif string(experiment)[1:8] == "majorana"
+    elseif startswith(string(experiment), "majorana_")
         events = read_events_majorana(experiment)
         partitions = read_partitions_majorana()
     else

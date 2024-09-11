@@ -85,7 +85,7 @@ function read_partitions_legend200()::Table
             push!(ϵk, eff ± σ_eff)
 
             push!(Δk, pardata.energy_bias_in_keV.val ± pardata.energy_bias_in_keV.unc)
-            push!(σk, pardata.fwhm_in_keV.val ± pardata.fwhm_in_keV.unc)
+            push!(σk, (pardata.fwhm_in_keV.val ± pardata.fwhm_in_keV.unc) / 2.355)
         end
     end
 

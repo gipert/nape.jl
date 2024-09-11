@@ -9,7 +9,12 @@ using IntervalSets: (..)
 function read_events_majorana(dataset::Symbol)::Table
     timestamp = []; detector = []; energy = []
 
-    lookup = Dict(:majorana_DS0 => "mjd-DS0", :majorana_mod1 => "mjd-mod1",:majorana_mod2 => "mjd-mod2")
+    lookup = Dict(
+        :majorana_DS0 => "mjd-DS0",
+        :majorana_mod1 => "mjd-mod1",
+        :majorana_mod2 => "mjd-mod2"
+    )
+
     for line in readlines("data/majorana/events.txt")
         cols = split(line)
         if cols[end] == lookup[dataset]
@@ -53,6 +58,6 @@ function read_partitions_majorana()::Table
         exposure=[1.26, 49.6, 17.06, 3.122],
         ϵk=[00.611054 ± 0.023909, 0.62 ± 0.03, 0.62 ± 0.03, 0.592331 ± 0.033576],
         Δk=[0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2],
-        σk=[2.611 ± 0.076, 2.52 ± 0.077, 2.52 ± 0.077, 2.55 ± 0.092]
+        σk=[2.611 ± 0.076, 2.52 ± 0.077, 2.52 ± 0.077, 2.55 ± 0.092] ./ 2.355,
     )
 end

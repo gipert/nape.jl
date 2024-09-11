@@ -3,23 +3,22 @@ using TypedTables
 using Distributions
 using DensityInterface
 
-
 Qββ = 2039.04 # keV
-N_A = 6.022
-m_76 = 75.6 # g/mol
+N_A = 6.02214
+m_76 = 75.9214 # g/mol
 ΔE = 240 # keV
 
-# Tuple{Real, Real, Vector{Real}, Vector{Real}, Real}
 # k-parameters are vectors indexed by event indices (timestamp ordering)
 ModelParameters = NamedTuple{(:Γ12, :B, :Δk, :σk, :α)}
+# Tuple{Real, Real, Vector{Real}, Vector{Real}, Real}
 
 # experiment = data set with shared background index parameter B
 
 # no for loops, only array programming
 # NOTE: @inbounds, @views and @fastmath make a marginal difference
 # NOTE: broadcasted operations should be already vectorized?
-# TODO: move multiplication of scalars to the end
-function likelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
+# NOTE: not hard-typing "p", otherwise problems when tuple fields order is different
+function loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
     P = partitions
     # same notation as in LNote 24-006
     # Γ12 will be in units of 10^-26 yr^-1
@@ -35,17 +34,24 @@ function likelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
         # first part of the likelihood that does not depend on the observed events
         sum(logpdf.(Poisson.(μk), length.(P.event_idxs)) .+ logpdf(Normal(), p.α)) +
         # part that depends on the observed events
-        # FIXME: remove abs() once problem with truncated distributions is fixed
         sum(
             -log.(μk[pid]) .+
-            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ p.Δk, abs.(p.σk)), events.energy))
+            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ p.Δk, p.σk), events.energy))
         )
     )
 
 end
 
-# slower version with for loops
-function slow_likelihood(events::Table, partitions::Table, p::ModelParameters)::Float64
+# this function is needed to get the correct experiment parameters when the
+# parameters in the prior structure are prefixed with the experiment name (when
+# combining multiple experiments)
+function getpars(pars::NamedTuple, experiment::Symbol)::NamedTuple
+    cjosul = filter(x -> startswith(string(x.first), "$(experiment)_"), pairs(pars))
+    return NamedTuple(Symbol(chopprefix(string(k), "$(experiment)_")) => v for (k, v) in pairs(cjosul))
+end
+
+# slower likelihood with for loops
+function slow_loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
     logL = 0
 
     # loop over partitions
