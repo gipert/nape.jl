@@ -30,7 +30,7 @@ ModelParameters = NamedTuple{(:Γ12, :B, :Δk, :σk, :α)}
 # NOTE: @inbounds, @views and @fastmath make a marginal difference
 # NOTE: broadcasted operations should be already vectorized?
 # NOTE: not hard-typing "p", otherwise problems when tuple fields order is different
-function loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
+function loglikelihood_experimental(events::Table, partitions::Table, p::NamedTuple)::Float64
     P = partitions
     # same notation as in LNote 24-006
     # Γ12 will be in units of 10^-26 yr^-1
@@ -41,14 +41,16 @@ function loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
 
     # energy nuisance parameters are indexed according to index in events table
     pid = events.part_idx
+    Δk = p.Δk[events.epar_idx]
+    σk = p.σk[events.epar_idx]
 
     return (
         # first part of the likelihood that does not depend on the observed events
-        sum(logpdf.(Poisson.(μk), length.(P.event_idxs)) .+ logpdf(Normal(), p.α)) +
+        sum(logpdf.(Poisson.(μk .+ eps.(μk)), length.(P.event_idxs))) +
         # part that depends on the observed events
         sum(
             -log.(μk[pid]) .+
-            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ p.Δk, p.σk), events.energy))
+            log.(μbk[pid]/ΔE .+ μsk[pid] .* pdf.(Normal.(Qββ .+ Δk, σk), events.energy))
         )
     )
 
@@ -57,13 +59,14 @@ end
 # this function is needed to get the correct experiment parameters when the
 # parameters in the prior structure are prefixed with the experiment name (when
 # combining multiple experiments)
+# TODO: speedup by building global lookup table
 function getpars(pars::NamedTuple, experiment::Symbol)::NamedTuple
     cjosul = filter(x -> startswith(string(x.first), "$(experiment)_"), pairs(pars))
     return NamedTuple(Symbol(chopprefix(string(k), "$(experiment)_")) => v for (k, v) in pairs(cjosul))
 end
 
 # slower likelihood with for loops
-function slow_loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
+function loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Float64
     logL = 0
 
     # loop over partitions
@@ -75,12 +78,12 @@ function slow_loglikelihood(events::Table, partitions::Table, p::NamedTuple)::Fl
         μbk = p.B * ΔE * part.exposure
         μk = μbk + μsk
 
-        logL += logpdf(Poisson(μk), length(part.event_idxs)) + logpdf(Normal(), p.α)
+        logL += logpdf(Poisson(μk + eps(μk)), length(part.event_idxs))
 
         # event_idx ordering: order as in partitions table
-        for i in part.event_idxs
+        for ev in events[part.event_idxs]
             logL += - log(μk) +
-                    + log(μbk/ΔE + μsk * pdf(Normal(Qββ + p.Δk[i], p.σk[i]), events[i].energy))
+                    + log(μbk/ΔE + μsk * pdf(Normal(Qββ + p.Δk[ev.epar_idx], p.σk[ev.epar_idx]), ev.energy))
         end
     end
 

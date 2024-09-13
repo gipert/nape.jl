@@ -20,6 +20,13 @@ function _add_partition_info(events::Table, partitions::Table)::Table
     return Table(merge(columns(events), columns(vcat(rows...)), (part_idx=part_idx,)))
 end
 
+function _add_parameter_index(events::Table, partitions::Table)::Table
+    return Table((
+        columns(events)...,
+        epar_idx=indexin(events.part_idx, unique(events.part_idx))
+    ))
+end
+
 function _add_event_idxs(partitions::Table, events::Table)::Table
     indices = fill(Vector{Int32}(), length(partitions))
 
@@ -53,6 +60,7 @@ function get_data(experiment::Symbol, from_cache::Bool=false)::NamedTuple
     end
 
     events = _add_partition_info(events, partitions)
+    events = _add_parameter_index(events, partitions)
     partitions = _add_event_idxs(partitions, events)
 
     return (events=events, partitions=partitions)

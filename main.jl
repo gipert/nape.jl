@@ -14,8 +14,12 @@ include("majorana.jl")
 include("likelihood.jl")
 include("tools.jl")
 
-# experiments = (:gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra, :gerdaII)
-experiments = (:gerdaI_golden,)
+experiments = (
+    :gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra,
+    :gerdaII,
+    :majorana_DS0, :majorana_mod1, :majorana_mod2,
+    :legend200
+)
 
 # cache data in memory
 data = Dict(exp => get_data(exp) for exp in experiments)
@@ -27,22 +31,39 @@ data = Dict(exp => get_data(exp) for exp in experiments)
 
 # build the combined loglikelihood by summing the partial loglikelihoods
 # TODO: getpars() is introducing latency...
-full_loglikelihood = logfuncdensity(
-    # non-global parameter names are prefixed by the experiment id, need to
-    # strip it off to make the likelihood work -> see getpars()
-    p -> sum([loglikelihood(data[exp]..., (Γ12=p.Γ12, getpars(p, exp)...)) for exp in experiments])
+full_loglikelihood = let data=data, experiments=experiments, getpars=getpars, loglikelihood=loglikelihood_experimental
+    logfuncdensity(
+        # non-global parameter names are prefixed by the experiment id, need to
+        # strip it off to make the likelihood work -> see getpars()
+        p -> sum([loglikelihood(data[exp]..., (Γ12=p.Γ12, getpars(p, exp)...)) for exp in experiments])
+    )
+end
+
+# get minimum value that α can assume
+α_min = minimum(
+    [
+        minimum(getfield.(data[exp].partitions.ϵk, :val) ./ getfield.(data[exp].partitions.ϵk, :err))
+        for exp in experiments
+    ]
 )
 
 # automatize building prior distributions for an experiment
 make_exp_priors = experiment -> begin
+    # get the energy scale/resolution partition data to construct the priors
+    # to do this, we get the partitions for which there is at least one observed event
+    # the ordering is defined by the events table
+    _d = data[experiment]
+    _pdata = _d.partitions[unique(_d.events.part_idx)]
+
     # prefix experiment label to parameter
     keys = (Symbol("$(experiment)_$k") for k in (:B, :Δk, :σk, :α))
+
     values = (
-#= B =# 1E-5..1E-2, # cts / keV kg yr
-#= Δ =# [Normal(v.val, v.err) for v in data[experiment].events.Δk],
+#= B =# 1E-5..1E-1, # cts / keV kg yr
+#= Δ =# [Normal(v.val, v.err) for v in _pdata.Δk],
         # energy resolution cannot be negative!
-#= σ =# [truncated(Normal(v.val, v.err), lower=0) for v in data[experiment].events.σk],
-#= α =# -1..1,
+#= σ =# [truncated(Normal(v.val, v.err), lower=0) for v in _pdata.σk],
+#= α =# truncated(Normal(), lower=-α_min),
     )
 
     # zip
@@ -53,7 +74,7 @@ end
 
 prior = distprod(;
     # the 0vbb half-life is a global parameter
-    Γ12 = 0.01..2, # 10^-26 yr^-1
+    Γ12 = 0..5, # 10^-26 yr^-1
     # all the other parameters are experiment specific
     merge([make_exp_priors(exp) for exp in experiments]...)...
 )
@@ -64,7 +85,14 @@ posterior = PosteriorMeasure(full_loglikelihood, prior)
 
 @time samples = bat_sample(
     posterior,
-    MCMCSampling(mcalg=MetropolisHastings(), nsteps=100_000, nchains=4)
+    MCMCSampling(
+        mcalg=MetropolisHastings(),
+        nsteps=100_000, nchains=4,
+        burnin=MCMCMultiCycleBurnin(
+            nsteps_per_cycle=10000,
+            max_ncycles=30
+        )
+    )
 ).result
 
 # refined global mode search
@@ -83,4 +111,4 @@ for exp in experiments
     @printf "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) 10^-4 cts / keV kg yr\n" exp globalmode[sym] / 1E-4 B_68.left B_68.right
 end
 
-@printf "T_12 > %.3g (90%% CI)" quantile(1E26 ./ samples.v.Γ12, 0.1)
+@printf "T_12 > %.3g (90%% CI)" 1E26 ./ quantile(samples, 0.9).Γ12
