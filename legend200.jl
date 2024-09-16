@@ -30,16 +30,16 @@ function read_events_legend200()::Table
         for rawid in data.geds.rawid
     ]
 
+    # data types should be correct
     return Table(
-        timestamp=data.trigger.timestamp,
+        timestamp=round.(Int64, data.trigger.timestamp),
         detector=detector,
         energy=data.geds.energy
     )
 end
 
 function read_partitions_legend200()::Table
-    span = []; detector = []; exposure = []
-    ϵk = []; Δk = []; σk = []
+    span, detector, exposure, ϵk, Δk, σk = _make_partitions_columns()
 
     cfg = LegendDataConfig("data/legend200/config.json")
     lmeta = LegendData(cfg.setups.l200, :l200).metadata
@@ -63,10 +63,10 @@ function read_partitions_legend200()::Table
             push!(detector, hpge)
 
             exp = pardata.livetime_in_s / 31536000 *
-                  lmeta.hardware.detectors.germanium.diodes[Symbol(hpge)].production.mass_in_g / 1000
+                  lmeta.hardware.detectors.germanium.diodes[hpge].production.mass_in_g / 1000
             push!(exposure, exp)
 
-            enrichment = lmeta.hardware.detectors.germanium.diodes[Symbol(hpge)].production.enrichment
+            enrichment = lmeta.hardware.detectors.germanium.diodes[hpge].production.enrichment
             eff = prod([v.val for v in values(pardata.ovbb_acceptance)]) * enrichment.val
             # FIXME: I'm sure there is a Julia builtin for sumsquared
             σ_eff = √(sum([v.unc for v in values(pardata.ovbb_acceptance)].^2) + enrichment.unc^2)

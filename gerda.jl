@@ -3,13 +3,15 @@ using JSON
 using Measurements
 using IntervalSets: Interval, (..)
 
+include("tools.jl")
+
 # :gerdaI_golden
 # :gerdaI_silver
 # :gerdaI_bege
 # :gerdaI_extra
 
 function read_events_gerdaI(dataset::Symbol)::Table
-    timestamp = []; detector = []; energy = []
+    timestamp, detector, energy = _make_events_columns()
 
     lookup = Dict(
         :gerdaI_golden => "ph1_golden",
@@ -22,7 +24,7 @@ function read_events_gerdaI(dataset::Symbol)::Table
         cols = split(line)
         if cols[end] == lookup[dataset]
             push!(timestamp, parse(Int, cols[2]))
-            push!(detector, cols[1])
+            push!(detector, Symbol(cols[1]))
             push!(energy, parse(Float64, cols[3]))
         end
     end
@@ -33,7 +35,7 @@ end
 function read_partitions_gerdaI()::Table
     return Table(
         span=[1320849782..1369143782, 1320849782..1369143782, 339945251..342589688, 1370007782..1380548582],
-        detector=["coax", "bege", "coax", "coax"],
+        detector=[:coax, :bege, :coax, :coax],
         exposure=[17.9, 2.404, 1.304, 1.904],
         ϵk=[0.571 ± 0.033, 0.663 ± 0.022, 0.571 ± 0.033, 0.576 ± 0.040],
         Δk=[0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2],
@@ -50,20 +52,23 @@ end
 # lookup detector name from "Instance" and gerda-metadata/detector-data
 function read_events_gerdaII()::Table
     return Table(
-        timestamp=[1455109448, 1457847659, 1472522222, 1475981084, 1480290460,
-                   1485848926, 1503578885, 1509498133, 1516142805, 1533092526,
-                   1539047354, 1566823934, 1568276649],
-        detector=["ANG4", "GD61C", "GD35B", "ANG1", "GD35B", "GD91A", "GD76C",
-                  "ANG1", "RG1", "GD61C", "IC74A", "ANG4", "GD32D"],
-        energy=[1995.2452, 1958.6807, 2018.1346, 1950.9419, 2067.9735,
-                2056.4280, 2042.0641, 1962.7372, 1957.5059, 1970.1398,
-                2058.8776, 2015.8751, 2012.0643],
+        timestamp=Vector{Int64}([1455109448, 1457847659, 1472522222,
+                                 1475981084, 1480290460, 1485848926,
+                                 1503578885, 1509498133, 1516142805,
+                                 1533092526, 1539047354, 1566823934,
+                                 1568276649]),
+        detector=Vector{Symbol}([:ANG4, :GD61C, :GD35B, :ANG1, :GD35B, :GD91A,
+                                 :GD76C, :ANG1, :RG1, :GD61C, :IC74A, :ANG4,
+                                 :GD32D]),
+        energy=Vector{Float32}([1995.2452, 1958.6807, 2018.1346, 1950.9419,
+                                2067.9735, 2056.4280, 2042.0641, 1962.7372,
+                                1957.5059, 1970.1398, 2058.8776, 2015.8751,
+                                2012.0643]),
     )
 end
 
 function read_partitions_gerdaII()::Table
-    span = []; detector = []; exposure = []
-    ϵk = []; Δk = []; σk = []
+    span, detector, exposure, ϵk, Δk, σk = _make_partitions_columns()
 
     for block in values(JSON.parsefile("data/gerda/II/0vbb-analysis-parameters.json"))
         for (k, v) in block
@@ -73,7 +78,7 @@ function read_partitions_gerdaII()::Table
             v["exposure"] <= 0 && continue
 
             push!(span, block["start_ts"]..block["end_ts"])
-            push!(detector, k)
+            push!(detector, Symbol(k))
             push!(exposure, v["exposure"])
             push!(ϵk, v["eff_tot"] ± v["eff_tot_sigma"])
             push!(Δk, v["bias"] ± v["energy_sigma"])

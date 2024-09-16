@@ -2,12 +2,14 @@ using TypedTables
 using Measurements
 using IntervalSets: (..)
 
+include("tools.jl")
+
 # :majorana_DS0
 # :majorana_mod1
 # :majorana_mod2
 
 function read_events_majorana(dataset::Symbol)::Table
-    timestamp = []; detector = []; energy = []
+    timestamp, detector, energy = _make_events_columns()
 
     lookup = Dict(
         :majorana_DS0 => "mjd-DS0",
@@ -19,7 +21,7 @@ function read_events_majorana(dataset::Symbol)::Table
         cols = split(line)
         if cols[end] == lookup[dataset]
             push!(timestamp, parse(Int, cols[2]))
-            push!(detector, cols[1])
+            push!(detector, Symbol(cols[1]))
             push!(energy, parse(Float64, cols[3]))
         end
     end
@@ -54,7 +56,7 @@ function read_partitions_majorana()::Table
 
     return Table(
         span=[1000..1050, 1100..1150, 1100..1150, 1100..1150],
-        detector=["ppc1", "ppc1", "ppc2" ,"icpc"],
+        detector=[:ppc1, :ppc1, :ppc2, :icpc],
         exposure=[1.26, 49.6, 17.06, 3.122],
         ϵk=[00.611054 ± 0.023909, 0.62 ± 0.03, 0.62 ± 0.03, 0.592331 ± 0.033576],
         Δk=[0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2],

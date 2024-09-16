@@ -17,7 +17,7 @@ function plot_marginals()
 end
 
 function plot_spectra()
-    xlim = [1930, 2160]
+    xlim = [1930, 2190]
 
     x = gerda.events.energy
     plot(

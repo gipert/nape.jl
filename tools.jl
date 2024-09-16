@@ -1,13 +1,34 @@
 using LegendHDF5IO
+import IntervalSets
 using TypedTables
 
+function _make_events_columns()
+    return (
+        Vector{Int64}(),
+        Vector{Symbol}(),
+        Vector{Float32}()
+    )
+end
+
+function _make_partitions_columns()
+    return (
+        Vector{IntervalSets.ClosedInterval{Int64}}(),
+        Vector{Symbol}(),
+        Vector{Float32}(),
+        Vector{Measurement{Float32}}(),
+        Vector{Measurement{Float32}}(),
+        Vector{Measurement{Float32}}()
+    )
+end
 
 # FIXME: I want this method to modify events (!), but how do I replace the
 # "events" object? is it even possible?
 function _add_partition_info(events::Table, partitions::Table)::Table
     # NOTE: must preserve events ordering
     # FIXME: I'm sure the following is far from the best way to do it...
-    rows = []; part_idx = []
+    rows = []
+    part_idx = Vector{Int32}()
+
     for ev in events
         sel = ev.timestamp .∈ partitions.span .&& ev.detector .== partitions.detector
         row = partitions[sel]
