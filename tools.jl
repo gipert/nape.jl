@@ -66,7 +66,7 @@ function get_data(experiment::Symbol, from_cache::Bool=false)::NamedTuple
         # return (events=events, partitions=partitions)
     elseif startswith(string(experiment), "gerdaI_")
         events = read_events_gerdaI(experiment)
-        partitions = read_partitions_gerdaI()
+        partitions = read_partitions_gerdaI(experiment)
     elseif experiment == :gerdaII
         events = read_events_gerdaII()
         partitions = read_partitions_gerdaII()
@@ -75,7 +75,7 @@ function get_data(experiment::Symbol, from_cache::Bool=false)::NamedTuple
         partitions = read_partitions_legend200()
     elseif startswith(string(experiment), "majorana_")
         events = read_events_majorana(experiment)
-        partitions = read_partitions_majorana()
+        partitions = read_partitions_majorana(experiment)
     else
         @error "experiment $experiment not known"
     end

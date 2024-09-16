@@ -1,30 +1,32 @@
 using BAT
 using Distributions
 using IntervalSets: (..)
+using Optim
 using Printf
 
-# using Debugger
-# break_on(:error)
-
-include("gerda.jl")
+include("data.jl")
 include("legend200.jl")
 include("majorana.jl")
 include("likelihood.jl")
 include("tools.jl")
 
-gerda = get_data(:gerdaI_golden)
+# :gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra,
+# :gerdaII,
+# :majorana_DS0, :majorana_mod1, :majorana_mod2,
+# :legend200
+data = get_data(:gerdaII)
 
 # let block because accessing global stuff is slow?
-full_loglikelihood = let gerda=gerda
-    logfuncdensity(p -> loglikelihood(gerda..., p))
+full_loglikelihood = let data=data
+    logfuncdensity(p -> loglikelihood_1bkg(data..., p...))
 end
 
 prior = distprod(
     Γ12 = 0..2,
     B = 1E-5..1E-2, # cts / keV kg yr
-    Δk = [Normal(v.val, v.err) for v in gerda.events.Δk],
-    σk = [truncated(Normal(v.val, v.err), lower=0) for v in gerda.events.σk],
-    α = -1..1,
+    Δk = [Normal(v.val, v.err) for v in data.events.Δk],
+    σk = [truncated(Normal(v.val, v.err), lower=0) for v in data.events.σk],
+    α = truncated(Normal(), lower=-2),
 )
 
 posterior = PosteriorMeasure(full_loglikelihood, prior)
@@ -43,4 +45,4 @@ globalmode = bat_findmode(
 
 B_68 = BAT.smallest_credible_intervals(samples.v.B)[1] / 1E-4
 @printf "BI = %.3g [%.3g, %.3g] (68%% CI) 10^-4 cts / keV kg yr\n" globalmode.B / 1E-4 B_68.left B_68.right
-@printf "T_12 > %.3g (90%% CI)" quantile(1E26 ./ samples.v.Γ12, 0.1)
+@printf "T_12 > %.3g (90%% CI)" 1E26 ./ quantile(samples, 0.9).Γ12

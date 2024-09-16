@@ -32,15 +32,25 @@ function read_events_gerdaI(dataset::Symbol)::Table
     return Table(timestamp=timestamp, detector=detector, energy=energy)
 end
 
-function read_partitions_gerdaI()::Table
-    return Table(
-        span=[1320849782..1369143782, 1320849782..1369143782, 339945251..342589688, 1370007782..1380548582],
-        detector=[:coax, :bege, :coax, :coax],
-        exposure=[17.9, 2.404, 1.304, 1.904],
-        ϵk=[0.571 ± 0.033, 0.663 ± 0.022, 0.571 ± 0.033, 0.576 ± 0.040],
-        Δk=[0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2],
-        σk=[4.26 ± 0.14, 2.73 ± 0.19, 4.26 ± 0.14, 4.16 ± 0.19] ./ 2.355
-    )
+function read_partitions_gerdaI(dataset::Symbol)::Table
+    # https://doi.org/10.1103/PhysRevLett.111.122503
+    if dataset == :gerdaI_golden
+        return Table(span=[1320849782..1369143782], detector=[:coax],
+                     exposure=[17.9], ϵk=[0.619 ± 0.07], Δk=[0.0 ± 0.2],
+                     σk=[4.26 ± 0.14] ./ 2.355)
+    elseif dataset == :gerdaI_silver
+        return Table(span=[339945251..342589688], detector=[:coax],
+                     exposure=[1.304], ϵk=[0.619 ± 0.07], Δk=[0.0 ± 0.2],
+                     σk=[4.26 ± 0.14] ./ 2.355)
+    elseif dataset == :gerdaI_bege
+        return Table(span=[1320849782..1369143782], detector=[:bege],
+                     exposure=[2.404], ϵk=[0.663 ± 0.022], Δk=[0.0 ± 0.2],
+                     σk=[2.73 ± 0.19] ./ 2.355)
+    elseif dataset == :gerdaI_extra
+        return Table(span=[1370007782..1380548582], detector=[:coax],
+                     exposure=[1.904], ϵk=[0.619 ± 0.07], Δk=[0.0 ± 0.2],
+                     σk=[4.16 ± 0.19] ./ 2.355)
+    end
 end
 
 # :gerdaII

@@ -29,7 +29,7 @@ function read_events_majorana(dataset::Symbol)::Table
     return Table(timestamp=timestamp, detector=detector, energy=energy)
 end
 
-function read_partitions_majorana()::Table
+function read_partitions_majorana(dataset::Symbol)::Table
     # span = []; detector = []; exposure = []
     # ϵk = []; Δk = []; σk = []
 
@@ -54,12 +54,20 @@ function read_partitions_majorana()::Table
 
     # return Table(span=span, detector=detector, exposure=exposure, ϵk=ϵk, Δk=Δk, σk=σk)
 
-    return Table(
-        span=[1000..1050, 1100..1150, 1100..1150, 1100..1150],
-        detector=[:ppc1, :ppc1, :ppc2, :icpc],
-        exposure=[1.26, 49.6, 17.06, 3.122],
-        ϵk=[00.611054 ± 0.023909, 0.62 ± 0.03, 0.62 ± 0.03, 0.592331 ± 0.033576],
-        Δk=[0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2, 0.0 ± 0.2],
-        σk=[2.611 ± 0.076, 2.52 ± 0.077, 2.52 ± 0.077, 2.55 ± 0.092] ./ 2.355,
-    )
+    if dataset == :majorana_DS0
+        return Table(span=[1000..1050], detector=[:ppc1], exposure=[1.26],
+                     ϵk=[00.611054 ± 0.023909], Δk=[0.0 ± 0.2], σk=[2.611 ± 0.076] ./ 2.355)
+    elseif dataset == :majorana_mod1
+        return Table(span=[1100..1150], detector=[:ppc1], exposure=[49.6],
+                     ϵk=[0.62 ± 0.03], Δk=[0.0 ± 0.2], σk=[2.52 ± 0.077] ./ 2.355)
+    elseif dataset == :majorana_mod2
+        return Table(
+            span=[1100..1150, 1100..1150],
+            detector=[:ppc2, :icpc],
+            exposure=[17.06, 3.122],
+            ϵk=[0.62 ± 0.03, 0.592331 ± 0.033576],
+            Δk=[0.0 ± 0.2, 0.0 ± 0.2],
+            σk=[2.52 ± 0.077, 2.55 ± 0.092] ./ 2.355
+        )
+    end
 end

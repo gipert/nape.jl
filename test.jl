@@ -7,6 +7,7 @@ include("majorana.jl")
 include("legend200.jl")
 include("likelihood.jl")
 include("tools.jl")
+include("checks.jl")
 
 experiments = (
     :gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra,
@@ -16,6 +17,10 @@ experiments = (
 )
 
 data = Dict(exp => get_data(exp) for exp in experiments)
+
+for exp in experiments
+    assert_in_fit_window(data[exp].events.energy)
+end
 
 pars = (
     Γ12=0.5,

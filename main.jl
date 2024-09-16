@@ -18,7 +18,7 @@ experiments = (
     :gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra,
     :gerdaII,
     :majorana_DS0, :majorana_mod1, :majorana_mod2,
-    :legend200
+    :legend200,
 )
 
 # cache data in memory
@@ -43,9 +43,8 @@ loglikelihood = let data=data, experiments=experiments, logl=loglikelihood_1bkg,
     )
 end
 
-ϵk = (exp, k) -> getfield.(data[exp].partitions.ϵk, k)
-
 # get minimum value that α can assume
+ϵk = (exp, k) -> getfield.(data[exp].partitions.ϵk, k)
 α_min = minimum([minimum(ϵk(exp, :val) ./ ϵk(exp, :err)) for exp in experiments])
 
 # automatize building prior distributions for an experiment
@@ -90,7 +89,7 @@ posterior = PosteriorMeasure(loglikelihood, prior)
         mcalg=MetropolisHastings(),
         nsteps=100_000, nchains=4,
         burnin=MCMCMultiCycleBurnin(
-            nsteps_per_cycle=10000,
+            nsteps_per_cycle=50_000,
             max_ncycles=30
         )
     )

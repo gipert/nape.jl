@@ -7,8 +7,8 @@ using DensityInterface
 # detector must match the format in the partitions table
 #
 # partitions: Table with columns (
-#     span::Interval,
-#     detector::String,
+#     span::ClosedInterval,
+#     detector::Symbol,
 #     exposure::Real, in kg yr
 #     ϵk::Measurement,
 #     Δk::Measurement, in keV
