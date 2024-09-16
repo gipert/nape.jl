@@ -30,12 +30,16 @@ data = Dict(exp => get_data(exp) for exp in experiments)
 # the parameter names with the experiment name
 
 # build the combined loglikelihood by summing the partial loglikelihoods
-# TODO: getpars() is introducing latency...
-full_loglikelihood = let data=data, experiments=experiments, getpars=getpars, loglikelihood=loglikelihood_experimental
-    logfuncdensity(
+full_loglikelihood = let data=data, experiments=experiments, loglikelihood=loglikelihood_experimental, getpars=getpars
+    DensityInterface.logfuncdensity(
         # non-global parameter names are prefixed by the experiment id, need to
         # strip it off to make the likelihood work -> see getpars()
-        p -> sum([loglikelihood(data[exp]..., (Γ12=p.Γ12, getpars(p, exp)...)) for exp in experiments])
+        p -> sum(
+            [
+                loglikelihood(data[exp]..., getpars(p, exp, (:Γ12, :B, :Δk, :σk, :α))...)
+                for exp in experiments
+            ]
+        )
     )
 end
 
@@ -56,14 +60,13 @@ make_exp_priors = experiment -> begin
     _pdata = _d.partitions[unique(_d.events.part_idx)]
 
     # prefix experiment label to parameter
-    keys = (Symbol("$(experiment)_$k") for k in (:B, :Δk, :σk, :α))
+    keys = (Symbol("$(experiment)_$k") for k in (:B, :Δk, :σk))
 
     values = (
 #= B =# 1E-5..1E-1, # cts / keV kg yr
 #= Δ =# [Normal(v.val, v.err) for v in _pdata.Δk],
         # energy resolution cannot be negative!
 #= σ =# [truncated(Normal(v.val, v.err), lower=0) for v in _pdata.σk],
-#= α =# truncated(Normal(), lower=-α_min),
     )
 
     # zip
@@ -75,6 +78,7 @@ end
 prior = distprod(;
     # the 0vbb half-life is a global parameter
     Γ12 = 0..5, # 10^-26 yr^-1
+    α = truncated(Normal(), lower=-α_min),
     # all the other parameters are experiment specific
     merge([make_exp_priors(exp) for exp in experiments]...)...
 )
