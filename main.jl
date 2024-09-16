@@ -30,26 +30,23 @@ data = Dict(exp => get_data(exp) for exp in experiments)
 # the parameter names with the experiment name
 
 # build the combined loglikelihood by summing the partial loglikelihoods
-full_loglikelihood = let data=data, experiments=experiments, loglikelihood=loglikelihood_experimental, getpars=getpars
+loglikelihood = let data=data, experiments=experiments, logl=loglikelihood_1bkg, _get=getpars
     DensityInterface.logfuncdensity(
         # non-global parameter names are prefixed by the experiment id, need to
         # strip it off to make the likelihood work -> see getpars()
         p -> sum(
             [
-                loglikelihood(data[exp]..., getpars(p, exp, (:Γ12, :B, :Δk, :σk, :α))...)
+                logl(data[exp]..., _get(p, exp, (:Γ12, :B, :Δk, :σk, :α))...)
                 for exp in experiments
             ]
         )
     )
 end
 
+ϵk = (exp, k) -> getfield.(data[exp].partitions.ϵk, k)
+
 # get minimum value that α can assume
-α_min = minimum(
-    [
-        minimum(getfield.(data[exp].partitions.ϵk, :val) ./ getfield.(data[exp].partitions.ϵk, :err))
-        for exp in experiments
-    ]
-)
+α_min = minimum([minimum(ϵk(exp, :val) ./ ϵk(exp, :err)) for exp in experiments])
 
 # automatize building prior distributions for an experiment
 make_exp_priors = experiment -> begin
@@ -83,7 +80,7 @@ prior = distprod(;
     merge([make_exp_priors(exp) for exp in experiments]...)...
 )
 
-posterior = PosteriorMeasure(full_loglikelihood, prior)
+posterior = PosteriorMeasure(loglikelihood, prior)
 
 @info "starting to generate posterior samples"
 

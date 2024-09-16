@@ -25,7 +25,7 @@ ModelParameters = NamedTuple{(:Γ12, :B, :Δk, :σk, :α)}
 # NOTE: @inbounds, @views and @fastmath make a marginal difference
 # NOTE: broadcasted operations should be already vectorized?
 # NOTE: not hard-typing "p", otherwise problems when tuple fields order is different
-function loglikelihood_experimental(
+function loglikelihood_1bkg(
     events::Table, partitions::Table,
     Γ12, B, Δk, σk, α
 )::Float64
@@ -36,10 +36,11 @@ function loglikelihood_experimental(
     ΔE = 240 # keV
     P = partitions
 
+    ϵk = k -> getfield.(P.ϵk, k)
+
     # same notation as in LNote 24-006
     # Γ12 will be in units of 10^-26 yr^-1
-    μsk = Γ12 * log(2) * N_A * P.exposure .*
-          (getfield.(P.ϵk, :val) .+ α * getfield.(P.ϵk, :err)) / m_76
+    μsk = Γ12 * log(2) * N_A * P.exposure .* (ϵk(:val) .+ α * ϵk(:err)) / m_76
     μbk = B * ΔE * P.exposure
     μk = μbk .+ μsk
 
@@ -59,6 +60,7 @@ function loglikelihood_experimental(
     )
 end
 
+# helper function to extract the experiment parameters from the full, global, parameter list
 function getpars(parameters::NamedTuple, experiment::Symbol, names::Tuple)
     [
         let _name=Symbol(experiment, '_', name)

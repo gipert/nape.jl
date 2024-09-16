@@ -15,36 +15,59 @@ experiments = (
     :legend200
 )
 
+data = Dict(exp => get_data(exp) for exp in experiments)
+
 pars = (
     Γ12=0.5,
+    α=0.01,
+
+    gerdaI_golden_B=1E-2,
+    gerdaI_golden_Δk=fill(-0.01, 46),
+    gerdaI_golden_σk=fill(1.8, 46),
+
+    gerdaI_silver_B=1E-3,
+    gerdaI_silver_Δk=fill(0.01, 10),
+    gerdaI_silver_σk=fill(1.8, 10),
+
+    gerdaI_bege_B=5E-4,
+    gerdaI_bege_Δk=fill(0.02, 3),
+    gerdaI_bege_σk=fill(1.1, 3),
+
+    gerdaI_extra_B=3E-4,
+    gerdaI_extra_Δk=fill(-0.02, 2),
+    gerdaI_extra_σk=fill(1.7, 2),
 
     gerdaII_B=4E-4,
     gerdaII_Δk=fill(0.01, 13),
-    gerdaII_σk=fill(2.5, 13),
-    gerdaII_α=0.01,
+    gerdaII_σk=fill(1.2, 13),
+
+    majorana_DS0_B=2E-2,
+    majorana_DS0_Δk=fill(0.03, 7),
+    majorana_DS0_σk=fill(2.5, 7),
+
+    majorana_mod1_B=1E-2,
+    majorana_mod1_Δk=fill(-0.03, 75),
+    majorana_mod1_σk=fill(1.1, 75),
+
+    majorana_mod2_B=4E-2,
+    majorana_mod2_Δk=fill(0.05, 14),
+    majorana_mod2_σk=fill(1.1, 14),
 
     legend200_B=2E-4,
-    legend200_Δk=fill(0.01, 7),
-    legend200_σk=fill(2.4, 7),
-    legend200_α=0.02
+    legend200_Δk=fill(0.05, 7),
+    legend200_σk=fill(1.1, 7),
 )
 
-data = Dict(exp => get_data(exp) for exp in experiments)
-
-for _logl in (loglikelihood, loglikelihood_experimental)
-
-    @info "Benchmarking: " _logl
-
-    display(@benchmark $_logl(data[:gerdaII]..., pars))
-    @show _logl(data[:gerdaII]..., pars)
+loglikelihood = let data=data, _logl=loglikelihood_1bkg
+    DensityInterface.logfuncdensity(
+        p -> sum(
+            [
+                _logl(data[exp]..., getpars(p, exp, (:Γ12, :B, :Δk, :σk, :α))...)
+                for exp in experiments
+            ]
+        )
+    )
 end
 
-# @show getpars(pars, :gerdaII)
-# @show getpars(pars, :legend200)
-
-# full_loglikelihood = logfuncdensity(
-#     p -> sum([loglikelihood(data[exp]..., (Γ12=p.Γ12, getpars(p, exp)...)) for exp in experiments])
-# )
-
-# display(@benchmark logdensityof(full_loglikelihood)(pars))
-# @show logdensityof(full_loglikelihood)(pars)
+display(@benchmark logdensityof(loglikelihood)(pars))
+@show logdensityof(loglikelihood)(pars)
