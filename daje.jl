@@ -5,14 +5,11 @@ using IntervalSets: (..)
 using Printf
 using Plots
 
-# using Debugger
-# break_on(:error)
-
-include("gerda.jl")
-include("legend200.jl")
-include("majorana.jl")
-include("likelihood.jl")
-include("tools.jl")
+include("src/gerda.jl")
+include("src/legend200.jl")
+include("src/majorana.jl")
+include("src/likelihood.jl")
+include("src/tools.jl")
 
 experiments = (
     :gerdaI_golden, :gerdaI_silver, :gerdaI_bege, :gerdaI_extra,
@@ -30,6 +27,7 @@ data = Dict(exp => get_data(exp) for exp in experiments)
 # the parameter names with the experiment name
 
 # build the combined loglikelihood by summing the partial loglikelihoods
+# do it inside a let block for performance
 loglikelihood = let data=data, experiments=experiments, logl=loglikelihood_1bkg, _get=getpars
     DensityInterface.logfuncdensity(
         # non-global parameter names are prefixed by the experiment id, need to
@@ -43,7 +41,7 @@ loglikelihood = let data=data, experiments=experiments, logl=loglikelihood_1bkg,
     )
 end
 
-# get minimum value that α can assume
+# get minimum value that α can assume (to truncate the prior)
 ϵk = (exp, k) -> getfield.(data[exp].partitions.ϵk, k)
 α_min = minimum([minimum(ϵk(exp, :val) ./ ϵk(exp, :err)) for exp in experiments])
 
@@ -106,9 +104,10 @@ globalmode = bat_findmode(
 println(bat_report(samples))
 
 for exp in experiments
-    sym = Symbol("$(exp)_B")
-    B_68 = BAT.smallest_credible_intervals(getproperty(samples.v, sym))[1] / 1E-4
-    @printf "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) 10^-4 cts / keV kg yr\n" exp globalmode[sym] / 1E-4 B_68.left B_68.right
+    cjosul = Symbol("$(exp)_B")
+    B_68 = BAT.smallest_credible_intervals(getproperty(samples.v, cjosul))[1] / 1E-3
+    @printf "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) cts / (keV ton yr)\n" \
+            exp globalmode[cjosul] / 1E-4 B_68.left B_68.right
 end
 
 @printf "T_12 > %.3g (90%% CI)" 1E26 ./ quantile(samples, 0.9).Γ12

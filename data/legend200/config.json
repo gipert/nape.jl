@@ -1,0 +1,19 @@
+{
+    "setups": {
+        "l200": {
+            "paths": {
+                "metadata": "$_/metadata",
+
+                "tier": "$_/generated/tier",
+                "tier/raw": "/some/other/storage/raw_lh5",
+                "tier_dsp": "$_/generated/tier/dsp",
+
+                "par": "$_/generated/par",
+                "par/dsp": "$_/generated/par/dsp",
+
+                "log": "$_/generated/log",
+                "plt": "$_/generated/plt"
+            }
+        }
+    }
+}
