@@ -1,6 +1,6 @@
-# Not a Precision Experiment (NAPE)
+# Not a Precision 0νββ Experiment (NAPE)
 
-Global bayesian analysis of Ge-76 neutrinoless double beta decay data.
+Global bayesian analysis of Ge-76 neutrinoless double beta (0νββ) decay data.
 Currently supports data sets from the MAJORANA DEMONSTRATOR, GERDA and
 LEGEND-200.
 
