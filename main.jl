@@ -73,7 +73,7 @@ end
 
 prior = distprod(;
     # the 0vbb half-life is a global parameter
-    Γ12 = 0..5, # 10^-26 yr^-1
+    Γ12 = 0..10, # 10^-26 yr^-1
     α = truncated(Normal(), lower=-α_min),
     # all the other parameters are experiment specific
     merge([make_exp_priors(exp) for exp in experiments]...)...
@@ -87,7 +87,7 @@ posterior = PosteriorMeasure(loglikelihood, prior)
     posterior,
     MCMCSampling(
         mcalg=MetropolisHastings(),
-        nsteps=100_000, nchains=4,
+        nsteps=200_000, nchains=4,
         burnin=MCMCMultiCycleBurnin(
             nsteps_per_cycle=50_000,
             max_ncycles=30

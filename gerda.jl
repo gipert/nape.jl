@@ -36,11 +36,11 @@ function read_partitions_gerdaI(dataset::Symbol)::Table
     # https://doi.org/10.1103/PhysRevLett.111.122503
     if dataset == :gerdaI_golden
         return Table(span=[1320849782..1369143782], detector=[:coax],
-                     exposure=[17.9], ϵk=[0.619 ± 0.07], Δk=[0.0 ± 0.2],
+                     exposure=[17.9], ϵk=[0.571 ± 0.033], Δk=[0.0 ± 0.2],
                      σk=[4.26 ± 0.14] ./ 2.355)
     elseif dataset == :gerdaI_silver
         return Table(span=[339945251..342589688], detector=[:coax],
-                     exposure=[1.304], ϵk=[0.619 ± 0.07], Δk=[0.0 ± 0.2],
+                     exposure=[1.304], ϵk=[0.571 ± 0.033], Δk=[0.0 ± 0.2],
                      σk=[4.26 ± 0.14] ./ 2.355)
     elseif dataset == :gerdaI_bege
         return Table(span=[1320849782..1369143782], detector=[:bege],

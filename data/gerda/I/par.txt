@@ -1,0 +1,40 @@
+("ph1_golden", "energyResolution"     , 4.27/2.35482 );
+("ph1_golden", "energyResolutionSigma", 0.13/2.35482       );
+("ph1_golden", "signalEff"            , 0.688*0.83         );
+("ph1_golden", "signalEffSigma"       , 0.033              );
+("ph1_golden", "BI"                   , 45./17.905/230.    );
+
+("ph1_silver", "energyResolution"     , 4.27/2.35482);
+("ph1_silver", "energyResolutionSigma", 0.13/2.35482  );
+("ph1_silver", "signalEff"            , 0.688*0.83     );
+("ph1_silver", "signalEffSigma"       , 0.033          );
+("ph1_silver", "BI"                   , 9./1.304/230.  );
+("ph1_silver", "exposure"             , 1.304          );
+
+("ph1_bege",   "energyResolution"     , 2.74/2.35482);
+("ph1_bege",   "energyResolutionSigma", 0.20/2.35482   );
+("ph1_bege",   "signalEff"            , 0.720*0.921    );
+("ph1_bege",   "signalEffSigma"       , 0.022          );
+("ph1_bege",   "BI"                   , 3./2.404/232.  );
+("ph1_bege",   "exposure"             , 2.404          );
+
+("ph1_extra", "energyResolution"     , 4.17/2.35482   );
+("ph1_extra", "energyResolutionSigma", 0.19/2.35482   ); // <-
+("ph1_extra", "signalEff"            , 0.694*0.83     ); // <-
+("ph1_extra", "signalEffSigma"       , 0.040         ); // <-
+("ph1_extra", "BI"                   , 2./1.904/230   );
+("ph1_extra", "exposure"             , 1.904          );
+
+("ph2_coax", "energyResolution"     , 4.0/2.35482     );  
+("ph2_coax", "energyResolutionSigma", 0.2/2.35482      ); // <-
+("ph2_coax", "signalEff"            , 0.685*0.76*0.977 ); // <-
+("ph2_coax", "signalEffSigma"       , 0.075            ); // <-
+("ph2_coax", "BI"                   , 4./5.019/230     );
+("ph2_coax", "exposure"             , 5.019            );
+
+("ph2_bege",   "energyResolution"     , 3.0/2.35482    );
+("ph2_bege",   "energyResolutionSigma", 0.2/2.35482    ); // <-
+("ph2_bege",   "signalEff"            , 0.700*0.873*0.977);
+("ph2_bege",   "signalEffSigma"       , 0.013            ); 
+("ph2_bege",   "BI"                   , 1./5.826/230    );
+("ph2_bege",   "exposure"             , 5.826           );
