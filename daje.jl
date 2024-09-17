@@ -87,7 +87,7 @@ posterior = PosteriorMeasure(loglikelihood, prior)
         mcalg=MetropolisHastings(),
         nsteps=200_000, nchains=4,
         burnin=MCMCMultiCycleBurnin(
-            nsteps_per_cycle=50_000,
+            nsteps_per_cycle=20_000,
             max_ncycles=30
         )
     )
@@ -106,8 +106,10 @@ println(bat_report(samples))
 for exp in experiments
     cjosul = Symbol("$(exp)_B")
     B_68 = BAT.smallest_credible_intervals(getproperty(samples.v, cjosul))[1] / 1E-3
-    @printf "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) cts / (keV ton yr)\n" \
-            exp globalmode[cjosul] / 1E-4 B_68.left B_68.right
+    @printf(
+        "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) cts / (keV ton yr)\n",
+        exp, globalmode[cjosul] / 1E-4, B_68.left, B_68.right
+    )
 end
 
 @printf "T_12 > %.3g (90%% CI)" 1E26 ./ quantile(samples, 0.9).Γ12
