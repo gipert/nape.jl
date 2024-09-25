@@ -3,6 +3,7 @@ using Optim
 using Distributions
 using IntervalSets: (..)
 using Printf
+using HDF5
 using Plots
 
 include("src/gerda.jl")
@@ -85,13 +86,13 @@ posterior = PosteriorMeasure(loglikelihood, prior)
     posterior,
     MCMCSampling(
         mcalg=MetropolisHastings(),
-        nsteps=200_000, nchains=4,
-        burnin=MCMCMultiCycleBurnin(
-            nsteps_per_cycle=20_000,
-            max_ncycles=30
-        )
+        nsteps=100_000, nchains=4,
+        burnin=MCMCMultiCycleBurnin(nsteps_per_cycle=50_000)
     )
 ).result
+
+# save chains to disk
+bat_write("samples.h5", samples)
 
 # refined global mode search
 globalmode = bat_findmode(

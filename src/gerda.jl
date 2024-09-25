@@ -57,8 +57,8 @@ end
 
 # tier4->Scan(
 #   "timestamp:energy",
-#   "!isTP && !isBL && !isMuVetoed && ((energy > 1930 && energy < 2099) || (energy > 2109 && energy < 2114) || (energy > 2124 && energy < 2190)) && !isPSDVetoed && !isLArVetoed && (multiplicity == 1) && psdIsEval && (datasetID != 3
-#   )
+#   "!isTP && !isBL && !isMuVetoed && ((energy > 1930 && energy < 2099) || (energy > 2109 && energy < 2114) || (energy > 2124 && energy < 2190)) && !isPSDVetoed && !isLArVetoed && (multiplicity == 1) && psdIsEval && (datasetID != 3)"
+# )
 # lookup detector name from "Instance" and gerda-metadata/detector-data
 function read_events_gerdaII()::Table
     return Table(
