@@ -40,19 +40,31 @@ end
 
 function plot_l200_result()
 
-    energies = [1930, collect(2030:0.5:2043)..., 2190]
+    _samples = samples[end-20_000:end]
+    _weights = Weights(_samples.weight)
+
+    energies = [1930, collect(2034:0.3:2043)..., 2190]
     i68 = Vector(undef, length(energies))
     i95 = Vector(undef, length(energies))
 
     Threads.@threads for i in 1:length(energies)
-        @info "calculating posterior for energy $(energies[i])"
-        posterior = n_counts_l200_post(energies[i], samples)
-        i68[i] = first(BAT.smallest_credible_intervals(posterior))
-        i95[i] = first(BAT.smallest_credible_intervals(posterior, nsigma_equivalent=2))
+        E = energies[i]
+        @info "calculating posterior for energy $E"
+        posterior = n_counts_l200_post(E, _samples)
+
+        _int = BAT.smallest_credible_intervals(posterior, _weights, nsigma_equivalent=1)
+        length(_int) != 1 && @warn "[$E keV] 68% interval is disjoint"
+        i68[i] = first(_int)
+
+        _int = BAT.smallest_credible_intervals(posterior, _weights, nsigma_equivalent=2)
+        length(_int) != 1 && @warn "[$E keV] 95% interval is disjoint"
+        i95[i] = first(_int)
     end
 
     plot(
-        xlim=[2020, 2060], ylim=(1E-4, 1E-1), yscale=:log10,
+        xlim=[1930, 2190],
+        # ylim=(1E-4, 1E-1), yscale=:log10,
+        ylim=(0, 0.01),
         xlabel="Energy [keV]", ylabel="BI [cts / (keV kg yr)]"
     )
 
@@ -70,8 +82,9 @@ function plot_l200_result()
 
     plot!(
         energies,
-        broadcast(e -> n_counts_l200_gmode(e, mode(samples)), energies),
-        color="black"
+        broadcast(e -> n_counts_l200_mode(e, mode(samples)), energies),
+        color="black",
+        # st=:scatter,
     )
 
     x = data[:legend200].events.energy

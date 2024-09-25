@@ -80,21 +80,25 @@ prior = distprod(;
 
 posterior = PosteriorMeasure(loglikelihood, prior)
 
-@info "starting to generate posterior samples"
+if isfile("samples.h5")
+    @info "reading from samples.h5"
+    samples = bat_read("samples.h5").result
+else
+    @info "starting to generate posterior samples"
+    @time samples = bat_sample(
+        posterior,
+        MCMCSampling(
+            mcalg=MetropolisHastings(),
+            nsteps=200_000, nchains=8,
+        )
+    ).result
 
-@time samples = bat_sample(
-    posterior,
-    MCMCSampling(
-        mcalg=MetropolisHastings(),
-        nsteps=100_000, nchains=4,
-        burnin=MCMCMultiCycleBurnin(nsteps_per_cycle=50_000)
-    )
-).result
-
-# save chains to disk
-bat_write("samples.h5", samples)
+    # save chains to disk
+    bat_write("samples.h5", samples)
+end
 
 # refined global mode search
+@info "finding global mode and printing results"
 globalmode = bat_findmode(
     posterior,
     OptimAlg(optalg = Optim.NelderMead(), init = ExplicitInit([mode(samples)]))
