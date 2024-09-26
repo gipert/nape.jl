@@ -113,7 +113,7 @@ for exp in experiments
     B_68 = BAT.smallest_credible_intervals(getproperty(samples.v, cjosul))[1] / 1E-3
     @printf(
         "[%s] BI = %.3g [%.3g, %.3g] (68%% CI) cts / (keV ton yr)\n",
-        exp, globalmode[cjosul] / 1E-4, B_68.left, B_68.right
+        exp, globalmode[cjosul] / 1E-3, B_68.left, B_68.right
     )
 end
 
