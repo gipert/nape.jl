@@ -6,7 +6,7 @@ LEGEND-200.
 
 Quick start:
 ```
-$ julia main.jl
+$ julia daje.jl
 ```
 
 ## Useful pointers
